@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+
+    "vmSize": {
+      "value": "Standard_DC2as_v5"
+    },
+    "osType": {
+      "value": "Linux"
+    },
+    "diskSecurityType": {
+      "value": "ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey"
+    },
+    "osDiskStorageAccountID": {
+      "value": "/subscriptions/9ebaec8a-7787-12bc-67bc-abdef1287561/resourceGroups/decui-cvm-2022-0606/providers/Microsoft.Storage/storageAccounts/decuicvmstoracct20220606"
+    },
+    "osDiskURL": {
+      "value": "https://decuicvmstoracct20220606.blob.core.windows.net/decui-blob-container/decui-g2-rhel9-0606_OsDisk_1_9f910631341197dd9672ac0ccb4776ae.vhd"
+    },
+    "osDiskVmgsURL": {
+      "value": "https://decuicvmstoracct20220606.blob.core.windows.net/decui-blob-container/Linux_vmgs.vhd"
+    }
+  }
+}
+

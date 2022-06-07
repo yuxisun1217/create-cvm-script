@@ -1,0 +1,324 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DC2as_v5",
+      "allowedValues": [
+        "Standard_DC2as_v5",
+        "Standard_DC4as_v5",
+        "Standard_DC8as_v5",
+        "Standard_DC16as_v5",
+        "Standard_DC32as_v5",
+        "Standard_DC48as_v5",
+        "Standard_DC64as_v5",
+        "Standard_DC96as_v5",
+        "Standard_DC2ads_v5",
+        "Standard_DC4ads_v5",
+        "Standard_DC8ads_v5",
+        "Standard_DC16ads_v5",
+        "Standard_DC32ads_v5",
+        "Standard_DC48ads_v5",
+        "Standard_DC64ads_v5",
+        "Standard_DC96ads_v5",
+        "Standard_EC2as_v5",
+        "Standard_EC4as_v5",
+        "Standard_EC8as_v5",
+        "Standard_EC16as_v5",
+        "Standard_EC20as_v5",
+        "Standard_EC32as_v5",
+        "Standard_EC48as_v5",
+        "Standard_EC64as_v5",
+        "Standard_EC96as_v5",
+        "Standard_EC96ias_v5",
+        "Standard_EC2ads_v5",
+        "Standard_EC4ads_v5",
+        "Standard_EC8ads_v5",
+        "Standard_EC16ads_v5",
+        "Standard_EC20ads_v5",
+        "Standard_EC32ads_v5",
+        "Standard_EC48ads_v5",
+        "Standard_EC64ads_v5",
+        "Standard_EC96ads_v5",
+        "Standard_EC96iads_v5"
+      ],
+      "metadata": {
+        "description": "Size of the VM."
+      }
+    },
+    "vnetNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Determines whether or not a new virtual network should be provisioned"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.16.0/24",
+      "metadata": {
+        "description": "VNET address space"
+      }
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.16.0/24",
+      "metadata": {
+        "description": "Sets the subnet of the VM."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [
+        "Linux",
+        "Windows"
+      ],
+      "metadata": {
+        "description": "OS type for the Virtual Machine"
+      }
+    },
+    "osDiskType": {
+      "type": "string",
+      "defaultValue": "StandardSSD_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS",
+        "StandardSSD_LRS"
+      ],
+      "metadata": {
+        "description": "OS disk type of the VM."
+      }
+    },
+    "osDiskStorageAccountID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "ID of the OS disk storage account."
+      }
+    },
+    "osDiskURL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OS VHD URL."
+      }
+    },
+    "osDiskVmgsURL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OS VMGS URL."
+      }
+    },
+		"diskSecurityType": {
+			"type": "string",
+			"defaultValue": "ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey",
+			"allowedValues": [
+        "ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey"
+			],
+			"metadata": {
+				"description": "CVM disk security type."
+			}
+		},
+    "diskEncryptionSetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Disk encryption set Id for CVM provisioning with CMK."
+      }
+    }, 
+    "bootDiagnostics": {
+      "type": "string",
+      "defaultValue": "false",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
+      "metadata": {
+        "description": "Boot diagnostics setting of the VM."
+      }
+    },
+    "secureBootEnabled": {
+      "type": "string",
+      "defaultValue": "false",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
+      "metadata": {
+        "description": "Secure Boot setting of the VM."
+      }
+    }
+  },
+
+  "variables": {
+    "diskName": "[concat(parameters('vmName'), '-osDisk')]",
+    "networkInterfaceName": "[concat(parameters('vmName'), '-nic')]",
+    "publicIPAddressName": "[concat(parameters('vmName'), '-ip')]",
+    "networkSecurityGroupName": "[concat(parameters('vmName'), '-nsg')]",
+    "networkSecurityGroupId": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+    "virtualNetworkName": "[concat(parameters('vmName'), '-vnet')]",
+    "virtualNetworkId": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnetName": "[concat(parameters('vmName'), 'Subnet')]",
+    "subnetRef": "[concat(variables('virtualNetworkId'), '/subnets/', variables('subnetName'))]",
+    "isWindows": "[equals(parameters('osType'), 'Windows')]",
+    "isPMK": "[contains(parameters('diskSecurityType'), 'PlatformKey')]",
+    "diskSecurityProfile_PMK": {
+			"securityType": "[parameters('diskSecurityType')]"
+		},
+    "diskSecurityProfile_CMK": {
+      "securityType": "[parameters('diskSecurityType')]",
+      "secureVMdiskEncryptionSetId": "[parameters('diskEncryptionSetId')]"
+		}
+  },
+
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIpAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2019-02-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2019-09-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('networkSecurityGroupId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('networkSecurityGroupId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-07-01",
+      "name": "[variables('networkInterfaceName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('networkSecurityGroupId')]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfigNode",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[variables('networkSecurityGroupId')]"
+        }
+      }
+    },
+		{
+			"type": "Microsoft.Compute/disks",
+			"apiVersion": "2021-04-01",
+			"name": "[variables('diskName')]",
+			"location": "[resourceGroup().location]",
+			"sku": {
+				"name": "[parameters('osDiskType')]"
+			},
+			"properties": {
+				"osType": "[parameters('osType')]",
+				"hyperVGeneration": "V2",
+				"securityProfile": "[if(variables('isPMK'), variables('diskSecurityProfile_PMK'), variables('diskSecurityProfile_CMK'))]",
+				"creationData": {
+					"createOption": "ImportSecure",
+					"storageAccountId": "[parameters('osDiskStorageAccountID')]",
+					"sourceUri": "[parameters('osDiskURL')]",
+					"securityDataUri": "[parameters('osDiskVmgsURL')]"
+				}
+			}
+		},
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-07-01",
+      "name": "[parameters('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('diskName')]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+            "osDisk": {
+                "createOption": "Attach",
+                "osType": "[parameters('osType')]",
+                "managedDisk": {
+                  "id": "[resourceId('Microsoft.Compute/disks', variables('diskName'))]"
+                }
+            }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+            }
+          ]
+        },
+        "securityProfile": {
+          "uefiSettings" : {
+            "secureBootEnabled": "[parameters('secureBootEnabled')]",
+            "vTpmEnabled": "true"
+          },
+          "securityType" : "ConfidentialVM"
+        }
+      }
+    }
+  ]
+}
+
