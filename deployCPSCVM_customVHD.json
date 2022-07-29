@@ -201,7 +201,27 @@
       "apiVersion": "2019-02-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[resourceGroup().location]",
-      "properties": {}
+      "properties": {
+        "securityRules": [
+          {
+            "name": "22",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
     },
     {
       "condition": "[equals(parameters('vnetNewOrExisting'), 'new')]",
