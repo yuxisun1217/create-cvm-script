@@ -13,13 +13,13 @@
       "value": "ConfidentialVM_VMGuestStateOnlyEncryptedWithPlatformKey"
     },
     "osDiskStorageAccountID": {
-      "value": "/subscriptions/9ebaec8a-7787-12bc-67bc-abdef1287561/resourceGroups/decui-cvm-2022-0606/providers/Microsoft.Storage/storageAccounts/decuicvmstoracct20220606"
+      "value": "/subscriptions/06aabee8-dd74-458d-aa6a-1697636257aa/resourceGroups/walacvmtest/providers/Microsoft.Storage/storageAccounts/walacvmtest"
     },
     "osDiskURL": {
-      "value": "https://decuicvmstoracct20220606.blob.core.windows.net/decui-blob-container/decui-g2-rhel9-0606_OsDisk_1_9f910631341197dd9672ac0ccb4776ae.vhd"
+      "value": "https://walacvmtest.blob.core.windows.net/vhds/osdisk_9844e67a13.vhd"
     },
     "osDiskVmgsURL": {
-      "value": "https://decuicvmstoracct20220606.blob.core.windows.net/decui-blob-container/Linux_vmgs.vhd"
+      "value": "https://walacvmtest.blob.core.windows.net/vhds/Linux_vmgs.vhd"
     }
   }
 }
